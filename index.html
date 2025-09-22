@@ -78,6 +78,15 @@
 
         #notification-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 15px 25px; border-radius: 8px; z-index: 3000; transition: bottom 0.5s ease-in-out; background-color: var(--accent-blue); color: #fff;}
         #notification-toast.show { bottom: 20px; }
+
+        /* --- Calculator Styles (NEW) --- */
+        .calculator-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .calc-display { grid-column: 1 / -1; background-color: var(--secondary-color); color: var(--text-dark); padding: 20px; font-size: 2.5rem; text-align: right; border-radius: 5px; border: 1px solid var(--border-color); margin-bottom: 10px; word-wrap: break-word; word-break: break-all; min-height: 80px; }
+        .calc-btn { padding: 20px; font-size: 1.5rem; border-radius: 5px; border: none; background-color: #e9ecef; color: var(--text-dark); cursor: pointer; transition: background-color 0.2s; }
+        .calc-btn:hover { background-color: #ced4da; }
+        .calc-btn.operator { background-color: var(--accent-blue); color: var(--text-light); }
+        .calc-btn.operator:hover { background-color: #0056b3; }
+        .calc-btn.span-two { grid-column: span 2; }
     </style>
 </head>
 <body>
@@ -145,6 +154,7 @@
 
     <div id="calculator-modal" class="modal-overlay">
         <div class="modal-content">
+            <h2 class="modal-title">Calculator</h2>
             <div class="calculator-grid">
                 <div class="calc-display" id="calc-display-element">0</div>
                 <button class="calc-btn span-two" data-action="clear">AC</button><button class="calc-btn" data-action="delete">DEL</button><button class="calc-btn operator" data-action="operator">÷</button>
@@ -228,11 +238,12 @@
                 const amountClass = isCleared ? 'cleared' : t.type;
                 const sign = t.type === 'deposit' ? '+' : '-';
                 
+                // MODIFIED: Delete button is now available for all transaction types, including 'cleared'
                 element.innerHTML += `
                     <li class="transaction-item">
                         <div><span class="transaction-description">${t.description}</span><br><span class="transaction-date">${formatDate(t.date)}</span></div>
                         <div class="transaction-amount ${amountClass}">${isCleared ? '' : sign}${formatCurrency(t.amount)}</div>
-                        ${!isCleared ? `<button class="delete-btn" title="Delete" data-id="${t.id}"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        <button class="delete-btn" title="Delete" data-id="${t.id}"><i class="fa-solid fa-trash-can"></i></button>
                     </li>`;
             });
         };
@@ -387,7 +398,7 @@
         $('#clear-expense-select').addEventListener('change', (e) => { const selectedId = parseInt(e.target.value); const detailsEl = $('#clear-expense-details'); const confirmBtn = $('#clear-expense-confirm-btn'); if (selectedId) { const expense = transactions.find(t => t.id === selectedId); $('#clear-desc').textContent = expense.description; $('#clear-amount').textContent = formatCurrency(expense.amount); detailsEl.style.display = 'block'; confirmBtn.disabled = false; } else { detailsEl.style.display = 'none'; confirmBtn.disabled = true; } });
         $('#clear-expense-confirm-btn').addEventListener('click', handleClearExpense);
         
-        $$('#calculator-modal button').forEach(button => { button.addEventListener('click', () => { switch(button.dataset.action) { case 'number': calculator.appendNumber(button.innerText); break; case 'operator': calculator.chooseOperation(button.innerText); break; case 'equals': calculator.compute(); break; case 'clear': calculator.clear(); break; case 'delete': calculator.delete(); break; } }); });
+        $$('#calculator-modal button.calc-btn').forEach(button => { button.addEventListener('click', () => { switch(button.dataset.action) { case 'number': calculator.appendNumber(button.innerText); break; case 'operator': calculator.chooseOperation(button.innerText); break; case 'equals': calculator.compute(); break; case 'clear': calculator.clear(); break; case 'delete': calculator.delete(); break; } }); });
         document.addEventListener('click', e => { const sidebar = $('#sidebar'); if (!sidebar.contains(e.target) && e.target !== $('#menu-toggle')) sidebar.classList.remove('open'); if (e.target.closest('.delete-btn')) { const id = Number(e.target.closest('.delete-btn').dataset.id); if (confirm('Delete this transaction?')) { transactions = transactions.filter(t => t.id !== id); saveData(); updateDashboard(); showNotification("Transaction deleted."); } } });
         $('#add-deposit-btn').addEventListener('click', () => { $('#transaction-type').value = 'deposit'; $('#transaction-form').reset(); $('#date').valueAsDate = new Date(); openModal($('#transaction-modal')); });
         $('#add-debit-btn').addEventListener('click', () => { $('#transaction-type').value = 'debit'; $('#transaction-form').reset(); $('#date').valueAsDate = new Date(); openModal($('#transaction-modal')); });
